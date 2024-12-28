@@ -1,0 +1,44 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: 'InvoiceCustomerApp'
+  datasource:
+    username: root
+    url: jdbc:mysql://localhost:3306/CustomerUserRegistration
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 465
+    username: a91a90ee4f955e
+    password: dd69463c3148ff
+    protocol: smtp
+    properties:
+      mail:
+        debug: true
+    smpt:
+      connectiontimeout: 6000
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+
+Jwt:
+  expiration:
+    time: 86400000
+  secret: 1fc9d722e7197b3d56ad97da3c9cdd7b737681bf4e9b74863d2f0431b24e5714d6f8c6a83265016cf00654298a3f1271bf2bbd7e4f95bc253a8f99cbabe50314f2c9cfe8b480150a7752d455b4c828d95fb11fb22863eae39bf437b343877fb6e37d689b3fa939bb0df570d4c345e54e3e568ecd8b112de4ca03adda15b39cfa63f23c8c5b65315863385cf4836e5759ce0a1550df3423801f087fa03b1e1269856666e6aa9cbf1f858c12c64efbabb16983edd6e00a20ae2cc222a9d721f0a10ed5be8828cb677a5890ca9c517820a20f8b7085388045e46a121196cc27925f7aa9adcef5b74c56f582e061b93e551d8f3061b56f580048c0a8ef1b3221a9c4e44aee5e988ec10d6ad7e8d74bf494766af6db420a7b9c698c0466b0cb524c254b456cd812bf95ff2a463d272c694f8af7076b56e7a3bb8631b1b26772d4916383bca618958ad46a500fb3c606e94be593463a44d6398b920d0ad9dde345775c1a56248d154683540c0a5c30b64f2e7b861b63ffcace08942b859cafee173cedbe38b9d505c5e782dbb66687df3b1167a2e93ab5d954abf67d034d47adfcd06fa122f347cce8acfeaee27a548b14d83f8a0c7aea3211e55f67b05929d0fe37a4029ad73bee3b9bef040b291800cef9eebc17359dfef6b7abee74b62e175fa9f23e473a3ccc2078486289056914728e0fbd351e14d2e70d49dbfd19f3c4298009

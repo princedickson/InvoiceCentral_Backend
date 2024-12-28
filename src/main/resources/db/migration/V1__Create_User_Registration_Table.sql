@@ -1,0 +1,10 @@
+
+CREATE TABLE user_registration (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    app_role VARCHAR(50) NOT NULL,
+    locked BOOLEAN DEFAULT FALSE,
+    enable BOOLEAN DEFAULT FALSE
+);
