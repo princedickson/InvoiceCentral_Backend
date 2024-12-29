@@ -55,6 +55,13 @@ public class SecurityConfig {
                         // sys_admin endpoint
                         .requestMatchers("/api/v1/sys_admin/").hasRole("SYS_ADMIN")
 
+                        // swagger endpoint
+                        .requestMatchers("/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**").permitAll()
+
                         .anyRequest()
                         .authenticated())
                 .authenticationProvider(authprovider()).addFilterBefore(authenticationFilter,

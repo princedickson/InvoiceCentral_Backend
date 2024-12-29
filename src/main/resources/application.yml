@@ -38,6 +38,14 @@ logging:
       springframework:
         security: DEBUG
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    disable-swagger-default-url: true
+
 Jwt:
   expiration:
     time: 86400000
