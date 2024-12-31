@@ -52,7 +52,7 @@ public class UserRegistration implements UserDetails, Serializable {
     @Enumerated(EnumType.STRING)
     private AppRole appRole = AppRole.USER;
     //private Boolean locked = false;
-    private Boolean enable = false;
+    private boolean enabled = false;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userRegistration", orphanRemoval = true)
     private List<ConfirmationToken> confirmationTokenList = new ArrayList<>();
@@ -93,7 +93,7 @@ public class UserRegistration implements UserDetails, Serializable {
 
     @Override
     public boolean isEnabled() {
-        return enable;
+        return enabled;
     }
 
     public String getEmail() {
@@ -102,6 +102,10 @@ public class UserRegistration implements UserDetails, Serializable {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override
