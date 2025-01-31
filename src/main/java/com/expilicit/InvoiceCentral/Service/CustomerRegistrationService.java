@@ -1,7 +1,6 @@
 package com.expilicit.InvoiceCentral.Service;
 
-import com.expilicit.InvoiceCentral.AuthProvider.JwtAuthProvider;
-import com.expilicit.InvoiceCentral.Dto.AccountLoginRequest;
+
 import com.expilicit.InvoiceCentral.Dto.ReigisterRequest;
 import com.expilicit.InvoiceCentral.Exception.*;
 import com.expilicit.InvoiceCentral.Entity.AppRole;
@@ -12,16 +11,9 @@ import com.expilicit.InvoiceCentral.Repository.CustomerInvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -78,6 +70,8 @@ public class CustomerRegistrationService {
         userRegistration.setEmail(registerRequest.email());
         userRegistration.setPassword(passwordEncoder.encode(registerRequest.password()));
         userRegistration.setAppRole(AppRole.USER);
+        userRegistration.setEnabled(false);
+        userRegistration.setAccountNonLocked(true);
         return customerInvoiceRepository.save(userRegistration);
     }
 
@@ -117,7 +111,8 @@ public class CustomerRegistrationService {
     }
 
     private String generateConfirmationLink(String token) {
-        return "http://localhost:8080/api/v1/register/confirm?token=" + token;
+        final String url = "http://localhost:4200/verify?token=";
+        return url + token;
     }
 
     private void validateToken(ConfirmationToken confirmationToken) {
@@ -132,7 +127,7 @@ public class CustomerRegistrationService {
 
     private void activateUser(ConfirmationToken confirmationToken) {
         UserRegistration userRegistration = confirmationToken.getUserRegistration();
-        userRegistration.setEnable(true);
+        userRegistration.setEnabled(true);
         customerInvoiceRepository.save(userRegistration);
         confirmationToken.setConfirmedAt(LocalDateTime.now());
         confirmationTokenRepository.save(confirmationToken);

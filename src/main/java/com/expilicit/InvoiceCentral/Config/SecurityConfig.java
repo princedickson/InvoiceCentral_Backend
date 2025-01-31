@@ -36,9 +36,9 @@ public class SecurityConfig {
 
                         // public endpoint
                         .requestMatchers(
-                                "/api/v1/register/**",
-                                "/api/v1/register/confirm").permitAll()
-                        .requestMatchers("/api/v1/register/login").permitAll()
+                                "/api/v1/auth/**",
+                                "/api/v1/auth/confirm", "/api/v1/auth/register").permitAll()
+                        .requestMatchers("/api/v1/auth/login").permitAll()
 
                         // user endpoint
                         .requestMatchers("/api/v1/user/**").hasAnyAuthority(Permission.USER_READ.name())

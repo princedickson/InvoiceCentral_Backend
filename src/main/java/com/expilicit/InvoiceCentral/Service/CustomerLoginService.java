@@ -1,10 +1,7 @@
 package com.expilicit.InvoiceCentral.Service;
 
 import com.expilicit.InvoiceCentral.AuthProvider.JwtAuthProvider;
-import com.expilicit.InvoiceCentral.Dto.AccountLoginRequest;
-import com.expilicit.InvoiceCentral.Dto.LoginAttemptStatus;
-import com.expilicit.InvoiceCentral.Dto.LoginResponse;
-import com.expilicit.InvoiceCentral.Dto.TwoFactorAuthRequest;
+import com.expilicit.InvoiceCentral.Dto.*;
 import com.expilicit.InvoiceCentral.Entity.LoginAttempt;
 import com.expilicit.InvoiceCentral.Entity.UserRegistration;
 import com.expilicit.InvoiceCentral.Exception.EmailSendingException;
@@ -45,6 +42,7 @@ public class CustomerLoginService {
     private final LoginAttemptRepository loginAttemptRepository;
     private final JMailSender mailSender;
     private final TwoFactorAuthService twoFactorAuthService;
+    private final TokenService tokenService;
 
     @Transactional
     public LoginResponse accountLogin(AccountLoginRequest loginRequest, HttpServletRequest request) {
@@ -65,9 +63,9 @@ public class CustomerLoginService {
                 throw new LockedException("Account is locked please wait or contact support");
             }
 
-            if (user.isTwoFactorEnable()){
+            if (user.isTwoFactorEnable()) {
                 twoFactorAuthService.generateAndSendCode(user);
-                return new LoginResponse(null, true, " 2Fa code sent to your email");
+                return LoginResponse.twoFactorRequired(" 2Fa code sent to your email");
             }
 
             try {
@@ -78,12 +76,13 @@ public class CustomerLoginService {
                 resetFailedLoginAttempt(user);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                String token = jwtAuthProvider.generateToken(user);
-                return new LoginResponse(token, false, "Login successfully");
-                //UserRegistration userDetails = (UserRegistration) authentication.getPrincipal();
-                //return jwtAuthProvider.generateToken(userDetails);
+                TokenPair tokenPair = tokenService.generateTokenPair(user);
+                return LoginResponse.successful(
+                        tokenPair.accessToken(),
+                        tokenPair.refreshToken(),
+                        "Login successfull");
             } catch (AuthenticationException e) {
-                handleFailedLogin(user,request);
+                handleFailedLogin(user, request);
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, " invalid credential");
             }
 
@@ -100,7 +99,7 @@ public class CustomerLoginService {
         );
 
         /* if the first login attempt or a different device location */
-        if (recentLoginAttempt.isEmpty() || isNewDeviceOrLocation(recentLoginAttempt.get(), currenttIpAddress, currentClient)){
+        if (recentLoginAttempt.isEmpty() || isNewDeviceOrLocation(recentLoginAttempt.get(), currenttIpAddress, currentClient)) {
             NotifyNewDeviceLocation(user, currenttIpAddress, currentClient);
         }
     }
@@ -144,7 +143,7 @@ public class CustomerLoginService {
         if (!user.isAccountNonLocked()) {
 
             LocalDateTime lockTime = user.getLockTime();
-            if (lockTime == null){
+            if (lockTime == null) {
                 unLockUserAccount(user);
                 return false;
             }
@@ -223,9 +222,9 @@ public class CustomerLoginService {
                 status,
                 LocalDateTime.now(),
                 ipAddress,
-                clientDetails.device != null ? clientDetails.device.family: unknown,
-                clientDetails.userAgent != null ? clientDetails.userAgent.family: unknown,
-                clientDetails.os != null ? clientDetails.os.family: unknown
+                clientDetails.device != null ? clientDetails.device.family : unknown,
+                clientDetails.userAgent != null ? clientDetails.userAgent.family : unknown,
+                clientDetails.os != null ? clientDetails.os.family : unknown
         );
         loginAttemptRepository.save(attempt);
         log.info("Login attempt recorded for user: {}", user.getEmail());
@@ -270,12 +269,16 @@ public class CustomerLoginService {
     @Transactional
     public LoginResponse verifyTwoFactor(TwoFactorAuthRequest twoFactorAuthRequest) {
         UserRegistration user = customerInvoiceRepository.findByEmail(twoFactorAuthRequest.email())
-                .orElseThrow(()-> new UsernameNotFoundException("user not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("user not found"));
 
-        if (!twoFactorAuthService.verifyCode(user, twoFactorAuthRequest.code())){
+        if (!twoFactorAuthService.verifyCode(user, twoFactorAuthRequest.code())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired code");
         }
-        String token = jwtAuthProvider.generateToken(user);
-        return new LoginResponse(token, false, "2Fa verification successful");
+
+        TokenPair tokenPair = tokenService.generateTokenPair(user);
+        return LoginResponse.successful(
+                tokenPair.accessToken(),
+                tokenPair.refreshToken(),
+                "2FA verification successful");
     }
 }

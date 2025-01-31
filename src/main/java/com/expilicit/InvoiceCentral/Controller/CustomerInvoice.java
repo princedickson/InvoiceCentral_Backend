@@ -1,12 +1,10 @@
 package com.expilicit.InvoiceCentral.Controller;
 
-import com.expilicit.InvoiceCentral.Dto.AccountLoginRequest;
-import com.expilicit.InvoiceCentral.Dto.LoginResponse;
-import com.expilicit.InvoiceCentral.Dto.ReigisterRequest;
-import com.expilicit.InvoiceCentral.Dto.TwoFactorAuthRequest;
+import com.expilicit.InvoiceCentral.Dto.*;
 import com.expilicit.InvoiceCentral.Entity.UserRegistration;
 import com.expilicit.InvoiceCentral.Service.CustomerLoginService;
 import com.expilicit.InvoiceCentral.Service.CustomerRegistrationService;
+import com.expilicit.InvoiceCentral.Service.TokenService;
 import com.expilicit.InvoiceCentral.Service.TwoFactorAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,7 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/register")
+@RequestMapping("/api/v1/auth")
 @AllArgsConstructor
 @Tag(name = "Authentication", description = "Authentication and user registration endpoints")
 public class CustomerInvoice {
@@ -32,18 +30,24 @@ public class CustomerInvoice {
     private final CustomerRegistrationService customerRegistrationService;
     private final CustomerLoginService customerLoginService;
     private final TwoFactorAuthService twoFactorAuthService;
+    private final TokenService tokenService;
 
-    @PostMapping
+    @PostMapping("/register")
     @ResponseStatus(HttpStatus.OK)
     public String signup(@Valid @RequestBody ReigisterRequest registerRequest) {
         return customerRegistrationService.register(registerRequest);
     }
 
     @GetMapping("/confirm")
-    @ResponseStatus(HttpStatus.CREATED)
-    public String verifyAccount(@RequestParam("token") String token) {
-        return customerRegistrationService.confirmToken(token);
+    public ResponseEntity<String> verifyAccount(@RequestParam("token") String token) {
+        try {
+            String result = customerRegistrationService.confirmToken(token);
+            return ResponseEntity.ok("Account verified successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired token");
+        }
     }
+
 
     @Operation(
             summary = "Login user",
@@ -63,7 +67,19 @@ public class CustomerInvoice {
 
     @PostMapping("/login")
     public LoginResponse accountLogin(@Valid @RequestBody AccountLoginRequest loginRequest, HttpServletRequest request) {
-        return customerLoginService.accountLogin(loginRequest, request);
+        UserRegistration user;
+         return customerLoginService.accountLogin(loginRequest, request);
+
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest request){
+        try {
+            TokenPair tokenPair = tokenService.refreshAccessToken(request.refreshToken());
+            return ResponseEntity.ok(tokenPair);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
     }
 
     @Operation(
